@@ -1,0 +1,15 @@
+# Ignorar archivos de configuración del proyecto
+*.pro.user
+
+# Ignorar directorios de compilación
+build/
+
+# Ignorar archivos de información
+info.txt
+
+# Ignorar archivos o carpetas generados por la librería qcustomplot
+qcustomplot/GPL.txt
+qcustomplot/changelog.txt
+qcustomplot/documentation/
+qcustomplot/examples/
+
