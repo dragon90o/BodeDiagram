@@ -23,7 +23,8 @@ FORMS += \
     widget.ui
 
 INCLUDEPATH += \
- C:\Users\dravv\OneDrive\Desktop\Mundo\projects\qtApplications\bodediagram1\qcustomplot
+    $$PWD/qcustomplot
+
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

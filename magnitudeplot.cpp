@@ -1,6 +1,8 @@
 #include "magnitudeplot.h"
 #include <QDebug>
-
+#include <QColor>
+#include <QPen>
+#include <QBrush>
 // Constructor
 MagnitudePlot::MagnitudePlot(QCustomPlot *plotWidget, QObject *parent)
     : QObject(parent), customPlotMagnitude(plotWidget), serial(new QSerialPort(this))
@@ -12,9 +14,7 @@ MagnitudePlot::MagnitudePlot(QCustomPlot *plotWidget, QObject *parent)
 // Destructor
 MagnitudePlot::~MagnitudePlot()
 {
-    if (serial->isOpen()) {
-        serial->close();  // Cierra el puerto serial si está abierto
-    }
+    closeSerial(); //destruir la clase cuando cierre el puerto
 }
 
 // Configura el gráfico de magnitud
@@ -23,18 +23,33 @@ void MagnitudePlot::setupPlot()
     customPlotMagnitude->addGraph();  // Añade un gráfico al widget QCustomPlot
     customPlotMagnitude->graph(0)->setName("Magnitud");
     customPlotMagnitude->xAxis->setLabel("Frecuencia");
-    customPlotMagnitude->yAxis->setLabel("Magnitud");
+    customPlotMagnitude->yAxis->setLabel("Magnitud (dB)");
 
     // Configura el rango inicial del gráfico
-    customPlotMagnitude->xAxis->setRange(0, 100);   // Cambia esto según tus requerimientos
-    customPlotMagnitude->yAxis->setRange(0, 100);
+
+    // Configura el rango del gráfico
+    customPlotMagnitude->xAxis->setRange(0, 10000);  // Cambia esto según tus requerimientos
+    customPlotMagnitude->yAxis->setRange(-100, 1000);
+
+    // Establece el número de ticks
+    customPlotMagnitude->xAxis->ticker()->setTickCount(5);
+    customPlotMagnitude->xAxis->setScaleType(QCPAxis::stLogarithmic);
+
+    // Configura el QPen con color y grosor
+    QPen pen(Qt::blue);
+    pen.setWidth(2); // Establece el grosor de la línea
+    customPlotMagnitude->graph(0)->setPen(pen); // Aplica el pen al gráfico
+
+    // Establece el fondo del gráfico
+    customPlotMagnitude->setBackground(QBrush(QColor(0,255,0,128))); // Cambia el fondo a verde
 }
+
+
 
 // Configura el puerto serial
 void MagnitudePlot::setupSerial()
 {
     // Configura el puerto serial
-    serial->setPortName("COM9");  // Cambia esto según el puerto adecuado
     serial->setBaudRate(QSerialPort::Baud9600);
     serial->setDataBits(QSerialPort::Data8);
     serial->setParity(QSerialPort::NoParity);
@@ -43,10 +58,11 @@ void MagnitudePlot::setupSerial()
 
     // Conexión del puerto serial con el método readSerial
     connect(serial, &QSerialPort::readyRead, this, &MagnitudePlot::readSerial);
+}
 
-    // Intento de abrir el puerto serial
-    if (!serial->open(QIODevice::ReadOnly)) {
-        qDebug() << "Error: No se pudo abrir el puerto serial";
+void MagnitudePlot::closeSerial(){
+    if (serial->isOpen()) {
+        serial->close();
     }
 }
 
@@ -55,20 +71,50 @@ void MagnitudePlot::readSerial()
 {
     while (serial->canReadLine()) {
         QByteArray data = serial->readLine().trimmed();  // Lee una línea de datos y elimina espacios en blanco
+        qDebug() << "Datos recibidos:" << data; // Mensaje para depurar
 
         bool ok;
-        double value = data.toDouble(&ok);  // Convierte los datos en un número
+        double inputValue = data.toDouble(&ok);  // Convierte los datos en un número
 
-        if (ok) {
-            // Agrega el valor al gráfico
-            int dataCount = customPlotMagnitude->graph(0)->dataCount();
-            customPlotMagnitude->graph(0)->addData(dataCount, value);
-
-            // Ajusta el rango si los datos exceden el rango actual del gráfico
-            customPlotMagnitude->graph(0)->rescaleAxes();
-            customPlotMagnitude->replot();  // Redibuja el gráfico
-        } else {
-            qDebug() << "Error: No se pudieron convertir los datos del puerto serial";
+        if (!ok) {
+            qDebug() << "Error: No se pudo convertir inputValue a un número válido.";
+            continue;  // Salta esta iteración si el valor no es un número válido
         }
+
+        // Verifica que inputValue sea mayor que cero
+        if (inputValue <= 0) {
+            qDebug() << "Error: inputValue es <= 0, no se puede calcular log10.";
+            continue;  // Salta si inputValue es menor o igual a cero
+        }
+
+        // Verifica que outputValue sea mayor que cero (lo ingresas desde tu UI)
+        if (outputValue <= 0) {
+            qDebug() << "Error: outputValue es = 0, no se puede calcular log10.";
+            continue;  // Salta si outputValue es menor o igual a cero
+        }
+
+        // Calcula la magnitud
+        double ratio = inputValue / outputValue;
+        double magnitude = 20 * log10(ratio);
+        qDebug() << "Input Value:" << inputValue << "Output Value:" << outputValue << "Magnitude:" << magnitude;
+
+        // Agrega el valor al gráfico
+        int dataCount = customPlotMagnitude->graph(0)->dataCount();
+        customPlotMagnitude->graph(0)->addData(dataCount, magnitude);
+
+        // Ajusta el rango si los datos exceden el rango actual del gráfico
+        customPlotMagnitude->graph(0)->rescaleAxes();
+        customPlotMagnitude->replot();  // Redibuja el gráfico
     }
+}
+
+
+QSerialPort* MagnitudePlot::getSerial(){
+    return serial;
+}
+
+// Método para establecer el valor de outputValue
+void MagnitudePlot::setOutputAmplitude(double value)
+{
+    outputValue = value; // Establece el valor de outputValue
 }

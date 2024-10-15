@@ -4,6 +4,8 @@
 #include <QWidget>
 #include "qcustomplot/qcustomplot.h"
 #include "magnitudeplot.h"
+#include "QLineEdit"
+#include "QPushButton"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -23,8 +25,8 @@ private:
     MagnitudePlot *magnitudePlot;
     Ui::Widget *ui;
     QCustomPlot *customPlotMagnitude; // grafico de magnitud
-
-
+    double outputValue = 0.0;
+    void startPushButtonClicked();
 
 
 };
