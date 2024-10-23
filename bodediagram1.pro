@@ -2,7 +2,8 @@ QT       += core gui serialport widgets printsupport
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-CONFIG += c++17
+CONFIG += c++17 bigobj
+QMAKE_CXXFLAGS += -bigobj
 
 # You can make your code fail to compile if it uses deprecated APIs.
 # In order to do so, uncomment the following line.
@@ -11,19 +12,26 @@ CONFIG += c++17
 SOURCES += \
     magnitudeplot.cpp \
     main.cpp \
+    phaseplot.cpp \
+    serialport.cpp \
     widget.cpp \
-    qcustomplot/qcustomplot.cpp
+    qcustomplot/qcustomplot.cpp \
+
 
 HEADERS += \
     magnitudeplot.h \
+    phaseplot.h \
+    serialport.h \
     widget.h\
     qcustomplot/qcustomplot.h
+
 
 FORMS += \
     widget.ui
 
 INCLUDEPATH += \
     $$PWD/qcustomplot
+    $$PWD/exprtk
 
 
 # Default rules for deployment.

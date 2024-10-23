@@ -5,27 +5,36 @@
 #include <QObject>
 #include <QSerialPort>
 #include "qcustomplot/qcustomplot.h"
+#include "serialport.h"
 
 class MagnitudePlot : public QObject
 {
     Q_OBJECT
-public:
-    //contructor
-    MagnitudePlot(QCustomPlot *plotWidget, QObject *parent = nullptr);//QCustomPlot es el widget donde se dibuja la grafica
-    ~MagnitudePlot();
-    void setOutputAmplitude(double value);
-    void setupPlot();   //metodos
-    void setupSerial();  //metodos
-    void closeSerial(); //metodo para cerrar el puerto serial
-    QSerialPort* getSerial();//metodo para obtener el puntero al puerto serial
 
-private slots: //funcion slot disenada para ser llamada en respuesta a una senal de un objeto
-    void readSerial(); // Metodo para leer los datos de arduino  y actualizar la grafica
+public:
+    // Constructor
+    explicit MagnitudePlot(QCustomPlot *plotWidget,SerialPort *serialPort, QObject *parent = nullptr); // QCustomPlot es el widget donde se dibuja la gráfica
+    ~MagnitudePlot();
+
+    void setOutputAmplitude(double value);   // Método para establecer el valor de amplitud de salida
+    QSerialPort* getSerial();
+
+public slots:
+    void HandleUserInput(bool isCalculatePressed);
+
 private:
-    QCustomPlot *customPlotMagnitude;  // Puntero al widget QCustomPlot.  esto quiere decir que la clase MagnitudePlot tiene un miembro de tipo
-    //o etiqueta QCustomPlot y se llama customPlotMagnitude
-    QSerialPort *serial;
-    double outputValue;
+    void setupPlot();   // Método para la configuración del gráfico
+    void updatePlot(double inputValue); // Método para actualizar el gráfico con nuevos datos
+    SerialPort *serialPort;
+    QCustomPlot *customPlotMagnitude;  // Puntero al widget QCustomPlot
+    double outputValue;                 // Valor de amplitud de salida
+    enum class PlotMode {
+        Static,
+        Dynamic
+    };
+    PlotMode plotMode;
+
 };
 
 #endif // MAGNITUDEPLOT_H
+
